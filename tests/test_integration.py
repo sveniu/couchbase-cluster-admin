@@ -65,3 +65,15 @@ def test_couchbase_set_memory_quotas(couchbase_rest):
     #   }
     # }
     c.set_memory_quotas({"memoryQuota": "256"})
+
+
+def test_couchbase_set_authentication(couchbase_rest):
+    c = cluster.Cluster(
+        "mycluster",
+        services=["kv"],
+        host=couchbase_rest["host"],
+        port=couchbase_rest["port"],
+        username="foo",
+        password="foobar",  # "The password must be at least 6 characters long."
+    )
+    c.set_authentication()

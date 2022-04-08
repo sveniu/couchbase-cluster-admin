@@ -122,3 +122,32 @@ def test_set_memory_quotas_by_service_name():
     c.set_memory_quotas_by_service_name({"kv": 100, "index": 200})
 
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_set_authentication():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/settings/web",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher(
+                {
+                    "username": "foo",
+                    "password": "bar",
+                    "port": "SAME",
+                }
+            )
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1", "service2"], host=host, port=port
+    )
+    c.set_authentication("foo", "bar")
+
+    assert len(responses.calls) == 1

@@ -27,7 +27,11 @@ class BaseClient:
         if headers is None:
             headers = {}
 
-        return requests.request(method, url, data=data, headers=headers)
+        auth = None
+        if self.username is not None and self.password is not None:
+            auth = (self.username, self.password)
+
+        return requests.request(method, url, data=data, headers=headers, auth=auth)
 
 
 class Cluster(BaseClient):
@@ -37,10 +41,14 @@ class Cluster(BaseClient):
         services: list = ["kv"],
         host=COUCHBASE_HOST,
         port=COUCHBASE_PORT_REST,
+        username=None,
+        password=None,
     ):
         self.cluster_id = cluster_id
         self.services = services
         self.baseurl = f"http://{host}:{port}"
+        self.username = username
+        self.password = password
 
     def enable_services(self):
         """
@@ -98,3 +106,29 @@ class Cluster(BaseClient):
             quotas[service_name_memory_quota_table[service_name]] = value
 
         self.set_memory_quotas(quotas, *args)
+
+    def set_authentication(self, username=None, password=None):
+        """
+        https://docs.couchbase.com/server/current/manage/manage-nodes/create-cluster.html#provision-a-node-with-the-rest-api
+        https://docs.couchbase.com/server/current/rest-api/rest-node-set-username.html
+        """
+
+        url = f"{self.baseurl}/settings/web"
+
+        if username is not None:
+            self.username = username
+
+        if password is not None:
+            self.password = password
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data={
+                "username": self.username,
+                "password": self.password,
+                "port": "SAME",
+            },
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set authentication: {resp.text}")
