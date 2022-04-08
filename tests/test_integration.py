@@ -50,3 +50,18 @@ def test_couchbase_enable_services(couchbase_rest):
         port=couchbase_rest["port"],
     )
     c.enable_services()
+
+
+def test_couchbase_set_memory_quotas(couchbase_rest):
+    c = cluster.Cluster(
+        "mycluster",
+        services=["kv"],
+        host=couchbase_rest["host"],
+        port=couchbase_rest["port"],
+    )
+    # {
+    #   "errors": {
+    #     "memoryQuota": "The data service quota (64MB) cannot be less than 256MB (current total buckets quota, or at least 256MB)."
+    #   }
+    # }
+    c.set_memory_quotas({"memoryQuota": "256"})
