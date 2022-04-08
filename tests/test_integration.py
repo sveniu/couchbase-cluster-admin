@@ -67,6 +67,19 @@ def test_couchbase_set_memory_quotas(couchbase_rest):
     c.set_memory_quotas({"memoryQuota": "256"})
 
 
+def test_couchbase_set_disk_paths(couchbase_rest):
+    c = cluster.Cluster(
+        "mycluster",
+        services=["kv"],
+        host=couchbase_rest["host"],
+        port=couchbase_rest["port"],
+        username="foo",
+        password="foobar",
+    )
+    # "Changing paths of nodes that are part of provisioned cluster is not supported"
+    c.set_disk_paths({"path": "/opt/couchbase/test123"})
+
+
 def test_couchbase_set_authentication(couchbase_rest):
     c = cluster.Cluster(
         "mycluster",

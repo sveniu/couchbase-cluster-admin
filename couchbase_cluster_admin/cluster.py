@@ -132,3 +132,22 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to set authentication: {resp.text}")
+
+    def set_disk_paths(self, disk_paths: dict):
+        """
+        https://docs.couchbase.com/server/current/manage/manage-nodes/initialize-node.html#initialize-a-node-with-the-rest-api
+        https://docs.couchbase.com/server/current/rest-api/rest-node-index-path.html
+
+        TODO "This parameter [cbas_path] can be repeated several times,
+        separated by ampersands, to setup multiple storage paths (I/O devices)
+        in analytics."
+        """
+
+        url = f"{self.baseurl}/nodes/self/controller/settings"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=disk_paths,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set disk paths: {resp.text}")

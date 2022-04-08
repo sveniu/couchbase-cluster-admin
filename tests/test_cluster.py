@@ -151,3 +151,28 @@ def test_set_authentication():
     c.set_authentication("foo", "bar")
 
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_set_disk_paths():
+    host = "127.0.0.1"
+    port = "8091"
+
+    paths = {
+        "test1": "/foo/test1",
+        "test2": "/foo/test2",
+    }
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/nodes/self/controller/settings",
+        body="",
+        match=[matchers.urlencoded_params_matcher(paths)],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1", "service2"], host=host, port=port
+    )
+    c.set_disk_paths(paths)
+
+    assert len(responses.calls) == 1
