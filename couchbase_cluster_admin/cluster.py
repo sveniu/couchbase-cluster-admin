@@ -182,3 +182,29 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to join cluster: {resp.text}")
+
+    def rebalance(
+        self,
+        known_nodes=[],
+        ejected_nodes=[],
+    ):
+        """
+        https://docs.couchbase.com/server/current/manage/manage-nodes/join-cluster-and-rebalance.html#join-a-cluster-with-the-rest-api
+        https://docs.couchbase.com/server/current/rest-api/rest-cluster-rebalance.html
+        """
+
+        data = {}
+        if known_nodes:
+            data["knownNodes"] = ",".join(known_nodes)
+        if ejected_nodes:
+            data["ejectedNodes"] = ",".join(ejected_nodes)
+
+        url = f"{self.baseurl}/controller/rebalance"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=data,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to join cluster: {resp.text}")

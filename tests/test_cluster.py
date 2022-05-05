@@ -210,3 +210,33 @@ def test_join_cluster():
     c.join_cluster(target_ip, target_port, username, password)
 
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_rebalance():
+    host = "127.0.0.1"
+    port = "8091"
+
+    known_nodes = ["k1", "k2", "k3"]
+    ejected_nodes = ["e1", "e2", "e3"]
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/controller/rebalance",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher(
+                {
+                    "knownNodes": ",".join(known_nodes),
+                    "ejectedNodes": ",".join(ejected_nodes),
+                }
+            )
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1", "service2"], host=host, port=port
+    )
+    c.rebalance(known_nodes, ejected_nodes)
+
+    assert len(responses.calls) == 1
