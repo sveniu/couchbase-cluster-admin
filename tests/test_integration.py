@@ -1,64 +1,103 @@
+import json
+import subprocess
+import time
+
+import jmespath
 import pytest
 import requests
 from couchbase_cluster_admin import cluster
-from requests.exceptions import ConnectionError
 
 # https://docs.couchbase.com/server/current/install/install-ports.html#detailed-port-description
 COUCHBASE_PORT_REST = 8091
 
 
-def is_ready(url, want_status_code=200):
-    try:
-        response = requests.get(url)
-        if response.status_code == want_status_code:
-            return True
-    except ConnectionError:
-        return False
+@pytest.fixture(scope="session")
+def docker_compose_file_path(pytestconfig):
+    paths = (
+        pytestconfig.rootpath / "tests" / "docker-compose.yml",
+        pytestconfig.rootpath / "docker-compose.yml",
+    )
+
+    for path in paths:
+        if path.is_file():
+            return path
+
+    raise FileNotFoundError(f"Could not find docker-compose.yml; tried {paths}")
 
 
 @pytest.fixture(scope="session")
-def couchbase_rest(docker_ip, docker_services):
-    """Ensure that HTTP service is up and responsive."""
-
-    # Map the given container port to the corresponding host port.
-    port = docker_services.port_for("couchbase1", COUCHBASE_PORT_REST)
-
-    # Wait until the service is ready.
-    docker_services.wait_until_responsive(
-        # Note: Fetching / will return a 301 redirect to /ui/index.html, which
-        # will be followed by requests (allow_redirects enabled by default).
-        timeout=30.0,
-        pause=0.1,
-        check=lambda: is_ready(f"http://{docker_ip}:{port}"),
+def docker_inspect(docker_compose_file_path):
+    subprocess.check_call(
+        [
+            "docker-compose",
+            "-f",
+            docker_compose_file_path,
+            "up",
+            "-d",
+        ]
     )
 
-    return {"host": docker_ip, "port": port}
+    yield json.loads(
+        subprocess.check_output(
+            ["docker", "inspect", "couchbase_node_a", "couchbase_node_b"]
+        )
+    )
+
+    subprocess.check_call(
+        [
+            "docker-compose",
+            "-f",
+            docker_compose_file_path,
+            "down",
+        ]
+    )
 
 
-def test_status_code(couchbase_rest):
-    url = f"""http://{couchbase_rest["host"]}:{couchbase_rest["port"]}/ui/index.html"""
-    response = requests.get(url)
+def test_status_code(docker_inspect):
+    node_a = {
+        "host": "127.0.0.1",
+        "port": jmespath.search(
+            '[0].HostConfig.PortBindings."8091/tcp"[0].HostPort', docker_inspect
+        ),
+        "internal_ip": jmespath.search(
+            "[0].NetworkSettings.Networks.*.IPAddress", docker_inspect
+        )[0],
+    }
+    node_b = {
+        "host": "127.0.0.1",
+        "port": jmespath.search(
+            '[1].HostConfig.PortBindings."8091/tcp"[0].HostPort', docker_inspect
+        ),
+        "internal_ip": jmespath.search(
+            "[1].NetworkSettings.Networks.*.IPAddress", docker_inspect
+        )[0],
+    }
 
-    assert response.status_code == 200
+    # Wait for nodes to start.
+    for node in (node_a, node_b):
+        while True:
+            url = f"""http://{node["host"]}:{node["port"]}/ui/index.html"""
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    break
+            except requests.exceptions.ConnectionError:
+                pass
 
+            time.sleep(0.5)
 
-def test_couchbase_enable_services(couchbase_rest):
+    # Enable services on node A.
     c = cluster.Cluster(
         "mycluster",
         services=["kv"],
-        host=couchbase_rest["host"],
-        port=couchbase_rest["port"],
+        host=node_a["host"],
+        port=node_a["port"],
+        username="foo",
+        password="foobar",  # "The password must be at least 6 characters long."
     )
     c.enable_services()
 
-
-def test_couchbase_set_memory_quotas(couchbase_rest):
-    c = cluster.Cluster(
-        "mycluster",
-        services=["kv"],
-        host=couchbase_rest["host"],
-        port=couchbase_rest["port"],
-    )
+    # Set memory quotas.
     # {
     #   "errors": {
     #     "memoryQuota": "The data service quota (64MB) cannot be less than 256MB (current total buckets quota, or at least 256MB)."
@@ -66,27 +105,40 @@ def test_couchbase_set_memory_quotas(couchbase_rest):
     # }
     c.set_memory_quotas({"memoryQuota": "256"})
 
-
-def test_couchbase_set_disk_paths(couchbase_rest):
-    c = cluster.Cluster(
-        "mycluster",
-        services=["kv"],
-        host=couchbase_rest["host"],
-        port=couchbase_rest["port"],
-        username="foo",
-        password="foobar",
-    )
+    # Set disk paths.
     # "Changing paths of nodes that are part of provisioned cluster is not supported"
     c.set_disk_paths({"path": "/opt/couchbase/test123"})
 
+    # Set authentication.
+    c.set_authentication()
 
-def test_couchbase_set_authentication(couchbase_rest):
-    c = cluster.Cluster(
+    # Join cluster.
+    member = cluster.Cluster(
         "mycluster",
         services=["kv"],
-        host=couchbase_rest["host"],
-        port=couchbase_rest["port"],
+        host=node_b["host"],
+        port=node_b["port"],
         username="foo",
         password="foobar",  # "The password must be at least 6 characters long."
     )
-    c.set_authentication()
+    member.enable_services()
+    member.join_cluster(node_a["internal_ip"], COUCHBASE_PORT_REST, insecure=True)
+
+    # Get list of cluster nodes.
+    known_nodes = []
+    for node in c.pool_info["nodes"]:
+        known_nodes.append(node["otpNode"])
+
+    # Assert that we have two nodes, i.e. the join was successful.
+    assert len(known_nodes) == 2
+
+    # Run the rebalance operation.
+    c.rebalance(known_nodes=known_nodes)
+
+    # Check for rebalance completion.
+    for _ in range(60):
+        if c.rebalance_is_done():
+            break
+        time.sleep(1)
+    else:
+        raise AssertionError("Rebalance did not complete in time.")
