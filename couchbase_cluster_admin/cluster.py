@@ -184,6 +184,27 @@ class Cluster(BaseClient):
             raise Exception(f"Failed to join cluster: {resp.text}")
 
     @property
+    def node_info(self):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-getting-storage-information.html
+        """
+
+        url = f"{self.baseurl}/nodes/self"
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get node info: {resp.text}")
+
+        return resp.json()
+
+    @property
+    def node_name(self):
+        return self.node_info["otpNode"]
+
+    @property
+    def node_uuid(self):
+        return self.node_info["nodeUUID"]
+
+    @property
     def pool_info(self):
         """
         https://docs.couchbase.com/server/current/rest-api/rest-cluster-details.html
