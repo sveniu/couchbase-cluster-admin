@@ -183,6 +183,19 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to join cluster: {resp.text}")
 
+    @property
+    def pool_info(self):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-cluster-details.html
+        """
+
+        url = f"{self.baseurl}/pools/default"
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get pool info: {resp.text}")
+
+        return resp.json()
+
     def rebalance(
         self,
         known_nodes=[],
@@ -208,3 +221,20 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to join cluster: {resp.text}")
+
+    @property
+    def rebalance_progress(self):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-get-rebalance-progress.html
+        """
+
+        url = f"{self.baseurl}/pools/default/rebalanceProgress"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get rebalance progress: {resp.text}")
+
+        return resp.json()
+
+    def rebalance_is_done(self) -> bool:
+        return self.rebalance_progress["status"] == "none"
