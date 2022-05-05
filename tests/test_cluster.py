@@ -176,3 +176,37 @@ def test_set_disk_paths():
     c.set_disk_paths(paths)
 
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_join_cluster():
+    host = "127.0.0.1"
+    port = "8091"
+
+    target_ip = "127.0.0.99"
+    target_port = "8091"
+    username = "foo"
+    password = "bar"
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/node/controller/doJoinCluster",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher(
+                {
+                    "clusterMemberHostIp": target_ip,
+                    "clusterMemberPort": target_port,
+                    "user": username,
+                    "password": password,
+                }
+            )
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1", "service2"], host=host, port=port
+    )
+    c.join_cluster(target_ip, target_port, username, password)
+
+    assert len(responses.calls) == 1

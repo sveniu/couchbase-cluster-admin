@@ -151,3 +151,34 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to set disk paths: {resp.text}")
+
+    def join_cluster(
+        self,
+        target_ip,
+        target_port=COUCHBASE_PORT_REST,
+        username=None,
+        password=None,
+        insecure=False,
+    ):
+        """
+        https://docs.couchbase.com/server/current/manage/manage-nodes/join-cluster-and-rebalance.html#join-a-cluster-with-the-rest-api
+        https://docs.couchbase.com/server/current/rest-api/rest-cluster-joinnode.html
+        """
+
+        url = f"{self.baseurl}/node/controller/doJoinCluster"
+
+        if insecure:
+            target_ip = f"http://{target_ip}"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data={
+                "clusterMemberHostIp": target_ip,
+                "clusterMemberPort": target_port,
+                "user": self.username if username is None else username,
+                "password": self.password if password is None else password,
+            },
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to join cluster: {resp.text}")
