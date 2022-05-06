@@ -23,10 +23,7 @@ class BaseClient:
     def __init__():
         pass
 
-    def http_request(self, url, method="GET", data=None, headers=None, timeout=10.0):
-        if headers is None:
-            headers = {}
-
+    def http_request(self, url, method="GET", data=None, headers={}, timeout=10.0):
         auth = None
         if self.username is not None and self.password is not None:
             auth = (self.username, self.password)
