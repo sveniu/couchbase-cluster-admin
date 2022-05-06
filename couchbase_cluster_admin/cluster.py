@@ -31,7 +31,14 @@ class BaseClient:
         if self.username is not None and self.password is not None:
             auth = (self.username, self.password)
 
-        return requests.request(method, url, data=data, headers=headers, auth=auth)
+        return requests.request(
+            method,
+            url,
+            data=data,
+            headers=headers,
+            auth=auth,
+            timeout=timeout,
+        )
 
 
 class Cluster(BaseClient):
