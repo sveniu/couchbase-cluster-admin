@@ -124,16 +124,11 @@ def test_status_code(docker_inspect):
     member.enable_services()
     member.join_cluster(node_a["internal_ip"], COUCHBASE_PORT_REST, insecure=True)
 
-    # Get list of cluster nodes.
-    known_nodes = []
-    for node in c.pool_info["nodes"]:
-        known_nodes.append(node["otpNode"])
-
     # Assert that we have two nodes, i.e. the join was successful.
-    assert len(known_nodes) == 2
+    assert len(c.known_nodes) == 2
 
     # Run the rebalance operation.
-    c.rebalance(known_nodes=known_nodes)
+    c.rebalance()
 
     # Check for rebalance completion.
     for _ in range(60):

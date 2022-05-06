@@ -221,15 +221,23 @@ class Cluster(BaseClient):
 
         return resp.json()
 
+    @property
+    def known_nodes(self):
+        return [node["otpNode"] for node in self.pool_info["nodes"]]
+
     def rebalance(
         self,
-        known_nodes=[],
+        known_nodes=None,
         ejected_nodes=[],
     ):
         """
         https://docs.couchbase.com/server/current/manage/manage-nodes/join-cluster-and-rebalance.html#join-a-cluster-with-the-rest-api
         https://docs.couchbase.com/server/current/rest-api/rest-cluster-rebalance.html
         """
+
+        # If no known nodes are specified, use the current list of known nodes.
+        if known_nodes is None:
+            known_nodes = self.known_nodes
 
         data = {}
         if known_nodes:
