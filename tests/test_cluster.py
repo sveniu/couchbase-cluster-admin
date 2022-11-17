@@ -24,7 +24,7 @@ def test_enable_services():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.enable_services()
 
@@ -53,7 +53,7 @@ def test_set_memory_quotas():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.set_memory_quotas({"service1": 100, "service2": 200})
 
@@ -82,7 +82,7 @@ def test_set_memory_quotas_ratios():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.set_memory_quotas({"service1": 0.1, "service2": 0.2}, total_memory_mb=100)
 
@@ -121,7 +121,7 @@ def test_set_memory_quotas_by_service_name():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.set_memory_quotas_by_service_name({"kv": 100, "index": 200})
 
@@ -150,7 +150,7 @@ def test_set_authentication():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.set_authentication("foo", "bar")
 
@@ -175,7 +175,7 @@ def test_set_disk_paths():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.set_disk_paths(paths)
 
@@ -210,7 +210,7 @@ def test_join_cluster():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.join_cluster(target_ip, target_port, username, password)
 
@@ -240,7 +240,7 @@ def test_rebalance():
     )
 
     c = cluster.Cluster(
-        "mycluster", services=["service1", "service2"], host=host, port=port
+        "mycluster", services=["service1", "service2"], api_host=host, api_port=port
     )
     c.rebalance(known_nodes, ejected_nodes)
 

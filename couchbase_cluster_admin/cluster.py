@@ -47,14 +47,14 @@ class Cluster(BaseClient):
         self,
         cluster_name: str,
         services: list = ["kv"],
-        host=COUCHBASE_HOST,
-        port=COUCHBASE_PORT_REST,
+        api_host=COUCHBASE_HOST,
+        api_port=COUCHBASE_PORT_REST,
         username=None,
         password=None,
     ):
         self.cluster_name = cluster_name
         self.services = services
-        self.baseurl = f"http://{host}:{port}"
+        self.baseurl = f"http://{api_host}:{api_port}"
         self.username = username
         self.password = password
 

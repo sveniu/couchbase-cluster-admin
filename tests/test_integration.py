@@ -91,8 +91,8 @@ def test_status_code(docker_inspect):
     c = cluster.Cluster(
         "mycluster",
         services=["kv"],
-        host=node_a["host"],
-        port=node_a["port"],
+        api_host=node_a["host"],
+        api_port=node_a["port"],
         username="foo",
         password="foobar",  # "The password must be at least 6 characters long."
     )
@@ -117,8 +117,8 @@ def test_status_code(docker_inspect):
     member = cluster.Cluster(
         "mycluster",
         services=["kv"],
-        host=node_b["host"],
-        port=node_b["port"],
+        api_host=node_b["host"],
+        api_port=node_b["port"],
         username="foo",
         password="foobar",  # "The password must be at least 6 characters long."
     )
