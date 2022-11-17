@@ -45,14 +45,14 @@ class BaseClient:
 class Cluster(BaseClient):
     def __init__(
         self,
-        cluster_id: str,
+        cluster_name: str,
         services: list = ["kv"],
         host=COUCHBASE_HOST,
         port=COUCHBASE_PORT_REST,
         username=None,
         password=None,
     ):
-        self.cluster_id = cluster_id
+        self.cluster_name = cluster_name
         self.services = services
         self.baseurl = f"http://{host}:{port}"
         self.username = username
@@ -91,6 +91,10 @@ class Cluster(BaseClient):
                 if total_memory_mb is None:
                     raise IllegalArgumentError("total_memory_mb is required for ratios")
                 quotas[quota_name] = int(value * total_memory_mb)
+
+        # The cluster name is also set using this endpoint, but it's not
+        # documented. Found by tracing the web UI.
+        quotas["clusterName"] = self.cluster_name
 
         resp = self.http_request(
             url,
