@@ -149,6 +149,11 @@ def test_status_code(docker_inspect):
     )
     assert len(c.buckets) == 1
 
+    # Set bucket property.
+    # FIXME only works on localhost. Returned error:
+    #   API is accessible from localhost only
+    # c.set_bucket_prop("mybucket", "access_scanner_enabled", "false")
+
     # Create a user.
     assert len(c.users) == 0
     c.create_user(

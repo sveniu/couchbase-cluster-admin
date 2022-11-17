@@ -333,3 +333,23 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to create user: {resp.text}")
+
+    def diag_eval(self, data: bytes):
+        url = f"{self.baseurl}/diag/eval"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=data,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to eval: {resp.text}")
+
+    def set_bucket_prop(self, bucket, prop, val):
+        data = (
+            f'ns_bucket:update_bucket_props("{bucket}", '
+            "[{extra_config_string, "
+            f'"{prop}={val}"'
+            "}])"
+        ).encode("utf-8")
+        return self.diag_eval(data)
