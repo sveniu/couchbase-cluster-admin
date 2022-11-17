@@ -19,6 +19,10 @@ class IllegalArgumentError(ValueError):
     pass
 
 
+class AddToNotProvisionedNodeException(Exception):
+    pass
+
+
 class BaseClient:
     def __init__():
         pass
@@ -184,6 +188,14 @@ class Cluster(BaseClient):
                 "password": self.password if password is None else password,
             },
         )
+
+        if (
+            resp.status_code == 400
+            and resp.content
+            == b'["Adding nodes to not provisioned nodes is not allowed."]'
+        ):
+            raise AddToNotProvisionedNodeException(resp.text)
+
         if resp.status_code != 200:
             raise Exception(f"Failed to join cluster: {resp.text}")
 
