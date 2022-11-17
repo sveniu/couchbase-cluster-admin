@@ -188,6 +188,7 @@ class Cluster(BaseClient):
             data={
                 "clusterMemberHostIp": target_ip,
                 "clusterMemberPort": target_port,
+                "services": ",".join(self.services),
                 "user": self.username if username is None else username,
                 "password": self.password if password is None else password,
             },
