@@ -5,6 +5,7 @@ import time
 import jmespath
 import pytest
 import requests
+
 from couchbase_cluster_admin import cluster
 
 # https://docs.couchbase.com/server/current/install/install-ports.html#detailed-port-description
@@ -137,3 +138,25 @@ def test_status_code(docker_inspect):
         time.sleep(1)
     else:
         raise AssertionError("Rebalance did not complete in time.")
+
+    # Create a bucket.
+    assert len(c.buckets) == 0
+    c.create_bucket(
+        {
+            "name": "mybucket",
+            "ramQuotaMB": "100",
+        }
+    )
+    assert len(c.buckets) == 1
+
+    # Create a user.
+    assert len(c.users) == 0
+    c.create_user(
+        "testuser",
+        {
+            "name": "Test User",
+            "password": "testpassword",
+            "roles": ["ro_admin"],
+        },
+    )
+    assert len(c.users) == 1

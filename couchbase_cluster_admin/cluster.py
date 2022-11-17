@@ -271,3 +271,48 @@ class Cluster(BaseClient):
 
     def rebalance_is_done(self) -> bool:
         return self.rebalance_progress["status"] == "none"
+
+    @property
+    def buckets(self):
+        url = f"{self.baseurl}/pools/default/buckets"
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get buckets: {resp.text}")
+
+        return resp.json()
+
+    def create_bucket(self, bucket_config: dict):
+        url = f"{self.baseurl}/pools/default/buckets"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=bucket_config,
+        )
+        if resp.status_code not in (200, 202):
+            raise Exception(f"Failed to create bucket: {resp.text}")
+
+    @property
+    def users(self):
+        url = f"{self.baseurl}/settings/rbac/users"
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get users: {resp.text}")
+
+        return resp.json()
+
+    def create_user(self, username, user_config: dict):
+        url = f"{self.baseurl}/settings/rbac/users/local/{username}"
+
+        data = user_config
+
+        # Transform list to comma-separated values.
+        if "roles" in data:
+            data["roles"] = ",".join(data["roles"])
+
+        resp = self.http_request(
+            url,
+            method="PUT",
+            data=data,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to create user: {resp.text}")
