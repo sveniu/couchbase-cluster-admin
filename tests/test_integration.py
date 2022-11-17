@@ -139,6 +139,9 @@ def test_status_code(docker_inspect):
     else:
         raise AssertionError("Rebalance did not complete in time.")
 
+    # Update index settings.
+    c.update_index_settings({"storageMode": "plasma"})
+
     # Create a bucket.
     assert len(c.buckets) == 0
     c.create_bucket(

@@ -353,3 +353,13 @@ class Cluster(BaseClient):
             "}])"
         ).encode("utf-8")
         return self.diag_eval(data)
+
+    def update_index_settings(self, settings: dict):
+        url = f"{self.baseurl}/settings/indexes"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=settings,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to update index settings: {resp.text}")
