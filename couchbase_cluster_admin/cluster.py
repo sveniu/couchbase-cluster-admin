@@ -367,3 +367,13 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to update index settings: {resp.text}")
+
+    def set_autofailover(self, settings: dict):
+        url = f"{self.baseurl}/settings/autoFailover"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=settings,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set auto failover settings: {resp.text}")

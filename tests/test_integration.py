@@ -142,6 +142,9 @@ def test_status_code(docker_inspect):
     # Update index settings.
     c.update_index_settings({"storageMode": "plasma"})
 
+    # Set autofailover settings.
+    c.set_autofailover({"enabled": "false"})
+
     # Create a bucket.
     assert len(c.buckets) == 0
     c.create_bucket(
