@@ -1,4 +1,4 @@
-import requests
+from .client import BaseClient
 
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
@@ -25,25 +25,6 @@ class AddToNotProvisionedNodeException(Exception):
 
 class ConnectToControllerOnJoinException(Exception):
     pass
-
-
-class BaseClient:
-    def __init__():
-        pass
-
-    def http_request(self, url, method="GET", data=None, headers={}, timeout=10.0):
-        auth = None
-        if self.username is not None and self.password is not None:
-            auth = (self.username, self.password)
-
-        return requests.request(
-            method,
-            url,
-            data=data,
-            headers=headers,
-            auth=auth,
-            timeout=timeout,
-        )
 
 
 class Cluster(BaseClient):
