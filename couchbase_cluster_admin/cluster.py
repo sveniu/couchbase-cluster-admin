@@ -61,6 +61,20 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to enable services: {resp.text}")
 
+    def set_cluster_name(self, cluster_name: str):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-name-cluster.html
+        """
+
+        url = f"{self.baseurl}/pools/default"
+        payload = {"clusterName": cluster_name}
+
+        resp = self.http_request(url, method="POST", data=payload)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set cluster name: {resp.text}")
+
+        self.cluster_name = cluster_name
+
     def set_memory_quotas(self, quotas: dict, total_memory_mb: int = None):
         """
         https://docs.couchbase.com/server/current/manage/manage-nodes/create-cluster.html#provision-a-node-with-the-rest-api
