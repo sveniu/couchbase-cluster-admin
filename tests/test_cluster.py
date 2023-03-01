@@ -1,5 +1,4 @@
 import pytest
-import requests
 import responses
 from responses import matchers
 
@@ -97,6 +96,35 @@ def test_set_memory_quotas_ratios_missing_total_raises():
 
     with pytest.raises(cluster.IllegalArgumentError):
         c.set_memory_quotas({"service1": 0.1, "service2": 0.2})
+
+
+@responses.activate
+def test_set_cluster_name():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/pools/default",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher(
+                {
+                    "clusterName": "newclustername",
+                }
+            )
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster",
+        services=["service1", "service2"],
+        api_host=host, api_port=port
+    )
+    c.set_cluster_name("newclustername")
+
+    assert len(responses.calls) == 1
 
 
 @responses.activate

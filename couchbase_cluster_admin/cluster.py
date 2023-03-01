@@ -1,4 +1,4 @@
-import requests
+from .client import BaseClient
 
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
@@ -27,30 +27,12 @@ class ConnectToControllerOnJoinException(Exception):
     pass
 
 
-class BaseClient:
-    def __init__():
-        pass
-
-    def http_request(self, url, method="GET", data=None, headers={}, timeout=10.0):
-        auth = None
-        if self.username is not None and self.password is not None:
-            auth = (self.username, self.password)
-
-        return requests.request(
-            method,
-            url,
-            data=data,
-            headers=headers,
-            auth=auth,
-            timeout=timeout,
-        )
-
-
 class Cluster(BaseClient):
     def __init__(
         self,
         cluster_name: str,
         services: list = ["kv"],
+        api_protocol="http",
         api_host=COUCHBASE_HOST,
         api_port=COUCHBASE_PORT_REST,
         username=None,
@@ -58,7 +40,7 @@ class Cluster(BaseClient):
     ):
         self.cluster_name = cluster_name
         self.services = services
-        self.baseurl = f"http://{api_host}:{api_port}"
+        self.baseurl = f"{api_protocol}://{api_host}:{api_port}"
         self.username = username
         self.password = password
 
@@ -78,6 +60,20 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to enable services: {resp.text}")
+
+    def set_cluster_name(self, cluster_name: str):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-name-cluster.html
+        """
+
+        url = f"{self.baseurl}/pools/default"
+        payload = {"clusterName": cluster_name}
+
+        resp = self.http_request(url, method="POST", data=payload)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set cluster name: {resp.text}")
+
+        self.cluster_name = cluster_name
 
     def set_memory_quotas(self, quotas: dict, total_memory_mb: int = None):
         """
