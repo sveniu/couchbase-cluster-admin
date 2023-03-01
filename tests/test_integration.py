@@ -145,6 +145,11 @@ def test_status_code(docker_inspect):
     # Set autofailover settings.
     c.set_autofailover({"enabled": "false"})
 
+    # Set new cluster name, then verify.
+    new_cluster_name = "newclustername"
+    c.set_cluster_name(new_cluster_name)
+    assert c.pool_info["clusterName"] == new_cluster_name
+
     # Create a bucket.
     assert len(c.buckets) == 0
     c.create_bucket(
