@@ -92,10 +92,6 @@ class Cluster(BaseClient):
                     raise IllegalArgumentError("total_memory_mb is required for ratios")
                 quotas[quota_name] = int(value * total_memory_mb)
 
-        # The cluster name is also set using this endpoint, but it's not
-        # documented. Found by tracing the web UI.
-        quotas["clusterName"] = self.cluster_name
-
         resp = self.http_request(
             url,
             method="POST",

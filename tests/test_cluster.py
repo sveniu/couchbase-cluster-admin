@@ -42,7 +42,6 @@ def test_set_memory_quotas():
         match=[
             matchers.urlencoded_params_matcher(
                 {
-                    "clusterName": "mycluster",
                     "service1": "100",
                     "service2": "200",
                 }
@@ -71,7 +70,6 @@ def test_set_memory_quotas_ratios():
         match=[
             matchers.urlencoded_params_matcher(
                 {
-                    "clusterName": "mycluster",
                     "service1": "10",
                     "service2": "20",
                 }
@@ -139,7 +137,6 @@ def test_set_memory_quotas_by_service_name():
         match=[
             matchers.urlencoded_params_matcher(
                 {
-                    "clusterName": "mycluster",
                     "memoryQuota": "100",
                     "indexMemoryQuota": "200",
                 }
