@@ -1,0 +1,33 @@
+name: CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.8"]
+        poetry-version: ["1.1.15"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      - name: Install dependencies and run tests
+        run: |
+          poetry install
+          poetry run pytest
