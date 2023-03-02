@@ -1,7 +1,11 @@
+import logging
+import time
+
 from .client import BaseClient
 
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
+COUCHBASE_SECURE_PORT_REST = "18091"
 
 
 service_name_memory_quota_table = {
@@ -92,10 +96,6 @@ class Cluster(BaseClient):
                     raise IllegalArgumentError("total_memory_mb is required for ratios")
                 quotas[quota_name] = int(value * total_memory_mb)
 
-        # The cluster name is also set using this endpoint, but it's not
-        # documented. Found by tracing the web UI.
-        quotas["clusterName"] = self.cluster_name
-
         resp = self.http_request(
             url,
             method="POST",
@@ -182,7 +182,7 @@ class Cluster(BaseClient):
     def join_cluster(
         self,
         target_ip,
-        target_port=COUCHBASE_PORT_REST,
+        target_port=COUCHBASE_SECURE_PORT_REST,
         username=None,
         password=None,
         insecure=False,
@@ -194,8 +194,11 @@ class Cluster(BaseClient):
 
         url = f"{self.baseurl}/node/controller/doJoinCluster"
 
+        # In 7.1+, cluster join is only allowed over secure https connections
+        # https://docs.couchbase.com/server/7.1/rest-api/rest-cluster-addnodes.html
         if insecure:
             target_ip = f"http://{target_ip}"
+            logging.warning("Insecure join will be rejected by Couchbase >= 7.1")
 
         resp = self.http_request(
             url,
@@ -210,10 +213,10 @@ class Cluster(BaseClient):
         )
 
         if resp.status_code == 400:
-            if "Adding nodes to not provisioned" in resp.content:
+            if "Adding nodes to not provisioned" in resp.text:
                 raise AddToNotProvisionedNodeException(resp.text)
 
-            if "Failed to connect to" in resp.content:
+            if "Failed to connect to" in resp.text:
                 raise ConnectToControllerOnJoinException(resp.text)
 
         if resp.status_code != 200:
@@ -303,6 +306,17 @@ class Cluster(BaseClient):
 
     def rebalance_is_done(self) -> bool:
         return self.rebalance_progress["status"] == "none"
+
+    def wait_for_rebalance(self, max_wait=60, interval=1):
+        """
+        Waits for a rebalance operation to complete
+        """
+        for _ in range(max_wait):
+            if self.rebalance_is_done():
+                break
+            time.sleep(interval)
+        else:
+            raise TimeoutError("Rebalance did not complete in time.")
 
     @property
     def buckets(self):
