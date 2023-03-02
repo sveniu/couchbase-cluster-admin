@@ -113,6 +113,9 @@ def test_status_code(docker_inspect):
     # Set authentication.
     c.set_authentication()
 
+    # Set usage statistics.
+    c.set_stats(send_stats=False)
+
     # Join cluster.
     member = cluster.Cluster(
         "mycluster",
