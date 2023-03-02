@@ -1,4 +1,5 @@
 import logging
+import time
 
 from .client import BaseClient
 
@@ -305,6 +306,17 @@ class Cluster(BaseClient):
 
     def rebalance_is_done(self) -> bool:
         return self.rebalance_progress["status"] == "none"
+
+    def wait_for_rebalance(self, max_wait=60, interval=1):
+        """
+        Waits for a rebalance operation to complete
+        """
+        for _ in range(max_wait):
+            if self.rebalance_is_done():
+                break
+            time.sleep(interval)
+        else:
+            raise TimeoutError("Rebalance did not complete in time.")
 
     @property
     def buckets(self):
