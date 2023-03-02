@@ -145,6 +145,21 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to set authentication: {resp.text}")
 
+    def set_stats(self, send_stats=False):
+        """
+        Send usage statistics to Couchbase or not.
+        """
+
+        url = f"{self.baseurl}/settings/stats"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data={"sendStats": send_stats and "true" or "false"},
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set stats: {resp.text}")
+
     def set_disk_paths(self, disk_paths: dict):
         """
         https://docs.couchbase.com/server/current/manage/manage-nodes/initialize-node.html#initialize-a-node-with-the-rest-api

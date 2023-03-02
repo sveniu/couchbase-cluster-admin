@@ -186,6 +186,29 @@ def test_set_authentication():
 
 
 @responses.activate
+def test_set_stats():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/settings/stats",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher({"sendStats": "true"})
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["kv"], api_host=host, api_port=port
+    )
+    c.set_stats(send_stats=True)
+
+    assert len(responses.calls) == 1
+
+
+@responses.activate
 def test_set_disk_paths():
     host = "127.0.0.1"
     port = "8091"
