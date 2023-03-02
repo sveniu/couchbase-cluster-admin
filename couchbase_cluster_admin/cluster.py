@@ -206,10 +206,10 @@ class Cluster(BaseClient):
         )
 
         if resp.status_code == 400:
-            if "Adding nodes to not provisioned" in resp.content:
+            if "Adding nodes to not provisioned" in resp.text:
                 raise AddToNotProvisionedNodeException(resp.text)
 
-            if "Failed to connect to" in resp.content:
+            if "Failed to connect to" in resp.text:
                 raise ConnectToControllerOnJoinException(resp.text)
 
         if resp.status_code != 200:
