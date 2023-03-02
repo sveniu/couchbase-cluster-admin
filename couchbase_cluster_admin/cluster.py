@@ -1,7 +1,10 @@
+import logging
+
 from .client import BaseClient
 
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
+COUCHBASE_SECURE_PORT_REST = "18091"
 
 
 service_name_memory_quota_table = {
@@ -178,7 +181,7 @@ class Cluster(BaseClient):
     def join_cluster(
         self,
         target_ip,
-        target_port=COUCHBASE_PORT_REST,
+        target_port=COUCHBASE_SECURE_PORT_REST,
         username=None,
         password=None,
         insecure=False,
@@ -190,8 +193,11 @@ class Cluster(BaseClient):
 
         url = f"{self.baseurl}/node/controller/doJoinCluster"
 
+        # In 7.1+, cluster join is only allowed over secure https connections
+        # https://docs.couchbase.com/server/7.1/rest-api/rest-cluster-addnodes.html
         if insecure:
             target_ip = f"http://{target_ip}"
+            logging.warning("Insecure join will be rejected by Couchbase >= 7.1")
 
         resp = self.http_request(
             url,
