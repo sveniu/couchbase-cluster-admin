@@ -44,9 +44,15 @@ class Cluster(BaseClient):
     ):
         self.cluster_name = cluster_name
         self.services = services
-        self.baseurl = f"{api_protocol}://{api_host}:{api_port}"
+        self.api_protocol = api_protocol
+        self.api_host = api_host
+        self.api_port = api_port
         self.username = username
         self.password = password
+
+    @property
+    def baseurl(self):
+        return f"{self.api_protocol}://{self.api_host}:{self.api_port}"
 
     def enable_services(self):
         """
@@ -178,6 +184,23 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to set disk paths: {resp.text}")
+
+    def rename_node(self, new_hostname: str):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-name-node.html
+
+        It is intended that the node we want to rename is the node we're
+        currently connected to via the current Cluster/self instance.
+        """
+        url = f"{self.baseurl}/node/controller/rename"
+        payload = {"hostname": new_hostname}
+
+        resp = self.http_request(url, method="POST", data=payload)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to rename node: {resp.text}")
+
+        # From now on, send all requests to the new hostname
+        self.api_host = new_hostname
 
     def join_cluster(
         self,
