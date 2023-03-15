@@ -231,6 +231,31 @@ def test_set_disk_paths():
 
 
 @responses.activate
+def test_rename_node():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/node/controller/rename",
+        body="",
+        match=[matchers.urlencoded_params_matcher(
+            {
+                "hostname": "newHostname"
+            }
+        )],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1"], api_host=host, api_port=port
+    )
+    c.rename_node("newHostname")
+
+    assert len(responses.calls) == 1
+
+
+@responses.activate
 def test_join_cluster():
     host = "127.0.0.1"
     port = "8091"
