@@ -2,6 +2,20 @@ import logging
 import time
 
 from .client import BaseClient
+from .exceptions import (
+    AddToNotProvisionedNodeException,
+    BucketCreationException,
+    ClusterJoinException,
+    ConnectToControllerOnJoinException,
+    IllegalArgumentError,
+    NodeRenameException,
+    RebalanceException,
+    SetAuthenticationException,
+    SetClusterNameException,
+    SetMemoryQuotaException,
+    UserCreationException,
+)
+
 
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
@@ -17,18 +31,6 @@ service_name_memory_quota_table = {
     "kv": "memoryQuota",
     "n1ql": "indexMemoryQuota",
 }
-
-
-class IllegalArgumentError(ValueError):
-    pass
-
-
-class AddToNotProvisionedNodeException(Exception):
-    pass
-
-
-class ConnectToControllerOnJoinException(Exception):
-    pass
 
 
 class Cluster(BaseClient):
@@ -81,7 +83,7 @@ class Cluster(BaseClient):
 
         resp = self.http_request(url, method="POST", data=payload)
         if resp.status_code != 200:
-            raise Exception(f"Failed to set cluster name: {resp.text}")
+            raise SetClusterNameException(resp.text)
 
         self.cluster_name = cluster_name
 
@@ -108,7 +110,7 @@ class Cluster(BaseClient):
             data=quotas,
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to set memory quotas: {resp.text}")
+            raise SetMemoryQuotaException(resp.text)
 
     def set_memory_quotas_by_service_name(self, quotas_by_service_name: dict, *args):
         """
@@ -149,7 +151,7 @@ class Cluster(BaseClient):
             },
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to set authentication: {resp.text}")
+            raise SetAuthenticationException(resp.text)
 
     def set_stats(self, send_stats=False):
         """
@@ -197,7 +199,7 @@ class Cluster(BaseClient):
 
         resp = self.http_request(url, method="POST", data=payload)
         if resp.status_code != 200:
-            raise Exception(f"Failed to rename node: {resp.text}")
+            raise NodeRenameException(resp.text)
 
         # From now on, send all requests to the new hostname
         self.api_host = new_hostname
@@ -243,7 +245,7 @@ class Cluster(BaseClient):
                 raise ConnectToControllerOnJoinException(resp.text)
 
         if resp.status_code != 200:
-            raise Exception(f"Failed to join cluster: {resp.text}")
+            raise ClusterJoinException(resp.text)
 
     @property
     def node_info(self):
@@ -311,7 +313,7 @@ class Cluster(BaseClient):
             data=data,
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to join cluster: {resp.text}")
+            raise RebalanceException(resp.text)
 
     @property
     def rebalance_progress(self):
@@ -358,7 +360,7 @@ class Cluster(BaseClient):
             data=bucket_config,
         )
         if resp.status_code not in (200, 202):
-            raise Exception(f"Failed to create bucket: {resp.text}")
+            raise BucketCreationException(resp.text)
 
     @property
     def users(self):
@@ -384,7 +386,7 @@ class Cluster(BaseClient):
             data=data,
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to create user: {resp.text}")
+            raise UserCreationException(resp)
 
     def diag_eval(self, data: bytes):
         url = f"{self.baseurl}/diag/eval"
