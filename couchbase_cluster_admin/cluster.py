@@ -386,7 +386,7 @@ class Cluster(BaseClient):
             data=data,
         )
         if resp.status_code != 200:
-            raise UserCreationException(resp)
+            raise UserCreationException(resp.text)
 
     def diag_eval(self, data: bytes):
         url = f"{self.baseurl}/diag/eval"
