@@ -1,6 +1,13 @@
 class AddToNotProvisionedNodeException(Exception):
     pass
 
+class BackupPlanCreationException(Exception):
+    pass
+
+
+class BackupRepositoryCreationException(Exception):
+    pass
+
 
 class BucketCreationException(Exception):
     pass

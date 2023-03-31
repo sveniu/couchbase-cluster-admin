@@ -4,6 +4,8 @@ import time
 from .client import BaseClient
 from .exceptions import (
     AddToNotProvisionedNodeException,
+    BackupPlanCreationException,
+    BackupRepositoryCreationException,
     BucketCreationException,
     ClusterJoinException,
     ConnectToControllerOnJoinException,
@@ -427,3 +429,80 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to set auto failover settings: {resp.text}")
+
+    def create_backup_plan(self, plan_name: str, plan_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-rest-api.html
+
+        The plan settings dictionary can be a bit unwieldy. Here's an example
+        for a weekly backup plan with full backups on Sundays at 01:15 and
+        incremental on every other day at 01:15:
+
+          {
+             "description" : "Sample Weekly Backup Plan",
+             "name" : "sample_weekly",
+             "services" : [
+                "data",
+                "gsi"
+             ],
+             "tasks" : [
+                {
+                   "name" : "daily_task_mo",
+                   "options" : null,
+                   "schedule" : {
+                      "frequency" : 1,
+                      "job_type" : "BACKUP",
+                      "period" : "MONDAY",
+                      "time" : "01:15"
+                   },
+                   "task_type" : "BACKUP"
+                },
+                ...
+                {
+                   "full_backup" : true,
+                   "name" : "daily_task_su_f",
+                   "options" : null,
+                   "schedule" : {
+                      "frequency" : 1,
+                      "job_type" : "BACKUP",
+                      "period" : "SUNDAY",
+                      "time" : "01:15"
+                   },
+                   "task_type" : "BACKUP"
+                }
+             ]
+          }
+        """
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/plan/{plan_name}"
+
+        if not plan_settings:
+            raise ValueError("Backup plan settings must be specified.")
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=plan_settings,
+        )
+        if resp.status_code != 200:
+            raise BackupPlanCreationException(resp.text)
+
+    def create_backup_repository(self, repository_name: str, repository_settings: dict):
+        """
+        https://docs.couchbase.com/server/7.1/rest-api/backup-create-repository.html
+        """
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self/repository/active/{repository_name}"
+
+        if not repository_settings:
+            raise ValueError("Backup repository settings must be specified.")
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=repository_settings,
+        )
+        if resp.status_code != 200:
+            raise BackupRepositoryCreationException(resp.text)
