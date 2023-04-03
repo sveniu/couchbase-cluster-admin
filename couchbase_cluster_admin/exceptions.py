@@ -1,6 +1,7 @@
 class AddToNotProvisionedNodeException(Exception):
     pass
 
+
 class BackupPlanCreationException(Exception):
     pass
 
