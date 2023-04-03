@@ -1,3 +1,4 @@
+import logging
 import time
 
 import requests
@@ -28,7 +29,7 @@ class BaseClient:
                 return response
             except requests.exceptions.ReadTimeout as e:
                 logging.warning(
-                    f"ReadTimeout exception for request {method} {url}. {max_retries} retries left",
-                    e,
+                    f"ReadTimeout exception for request {method} {url}. "
+                    + f"{max_retries} retries left: {e.printStackTrace()}"
                 )
                 time.sleep(1)
