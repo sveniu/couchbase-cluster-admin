@@ -10,9 +10,11 @@ from .exceptions import (
     BucketCreationException,
     ClusterJoinException,
     ConnectToControllerOnJoinException,
+    DeleteAlternateAddressException,
     IllegalArgumentError,
     NodeRenameException,
     RebalanceException,
+    SetAlternateAddressException,
     SetAuthenticationException,
     SetClusterNameException,
     SetMemoryQuotaException,
@@ -430,6 +432,25 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to set auto failover settings: {resp.text}")
+
+    def delete_node_alternate_address(self):
+        url = f"{self.baseurl}/node/controller/setupAlternateAddresses/external"
+        resp = self.http_request(
+            url,
+            method="DELETE",
+        )
+        if resp.status_code != 200:
+            raise DeleteAlternateAddressException(resp.text)
+
+    def set_node_alternate_address(self, hostname: dict):
+        url = f"{self.baseurl}/node/controller/setupAlternateAddresses/external"
+        resp = self.http_request(
+            url,
+            method="PUT",
+            data={"hostname": hostname},
+        )
+        if resp.status_code != 200:
+            raise SetAlternateAddressException(resp.text)
 
     def create_backup_plan(self, plan_name: str, plan_settings: dict):
         """

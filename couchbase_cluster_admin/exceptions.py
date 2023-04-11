@@ -22,6 +22,10 @@ class ConnectToControllerOnJoinException(Exception):
     pass
 
 
+class DeleteAlternateAddressException(Exception):
+    pass
+
+
 class IllegalArgumentError(ValueError):
     pass
 
@@ -31,6 +35,10 @@ class NodeRenameException(Exception):
 
 
 class RebalanceException(Exception):
+    pass
+
+
+class SetAlternateAddressException(Exception):
     pass
 
 
