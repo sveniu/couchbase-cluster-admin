@@ -50,6 +50,10 @@ class SetClusterNameException(Exception):
     pass
 
 
+class SetGsiSettingsExceptin(Exception):
+    pass
+
+
 class SetMemoryQuotaException(Exception):
     pass
 

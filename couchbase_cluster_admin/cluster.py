@@ -17,6 +17,7 @@ from .exceptions import (
     SetAlternateAddressException,
     SetAuthenticationException,
     SetClusterNameException,
+    SetGsiSettingsExceptin,
     SetMemoryQuotaException,
     UserCreationException,
 )
@@ -451,6 +452,19 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise SetAlternateAddressException(resp.text)
+
+    def set_gsi_settings(self, gsi_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/post-settings-indexes.html
+        """
+        url = f"{self.baseurl}/settings/indexes"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=gsi_settings,
+        )
+        if resp.status_code != 200:
+            raise SetGsiSettingsExceptin(resp.text)
 
     def create_backup_plan(self, plan_name: str, plan_settings: dict):
         """
