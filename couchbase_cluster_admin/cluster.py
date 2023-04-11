@@ -193,7 +193,7 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to set disk paths: {resp.text}")
 
-    def rename_node(self, new_hostname: str):
+    def rename_node(self, new_hostname: str, update_self=False):
         """
         https://docs.couchbase.com/server/current/rest-api/rest-name-node.html
 
@@ -207,8 +207,11 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise NodeRenameException(resp.text)
 
-        # From now on, send all requests to the new hostname
-        self.api_host = new_hostname
+        # From now on, send all requests to the new hostname.
+        # Might not be desirable in all cases (f.ex. if we're renaming the
+        # node to an internal-only IP while accessing it from an external one)
+        if update_self:
+            self.api_host = new_hostname
 
     def join_cluster(
         self,
