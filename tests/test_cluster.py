@@ -213,10 +213,11 @@ def test_set_gsi_settings():
     responses.add(
         responses.POST,
         f"http://{host}:{port}/settings/indexes",
-        body="",
+        body='{"storageMode": "plasma"}',
         match=[
             matchers.urlencoded_params_matcher({"storageMode": "plasma"})
         ],
+        content_type="text/json",
         status=200,
     )
 

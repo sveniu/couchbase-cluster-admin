@@ -452,8 +452,7 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise SetGsiSettingsException(resp.text)
 
-        # Couchbase does not return the appropriate content-type for resp.json()
-        return json.loads(resp.text)
+        return resp.json()
 
     def create_backup_plan(self, plan_name: str, plan_settings: dict):
         """
