@@ -3,24 +3,7 @@ import json
 import time
 
 from .client import BaseClient
-from .exceptions import (
-    AddToNotProvisionedNodeException,
-    BackupPlanCreationException,
-    BackupRepositoryCreationException,
-    BucketCreationException,
-    ClusterJoinException,
-    ConnectToControllerOnJoinException,
-    DeleteAlternateAddressException,
-    IllegalArgumentError,
-    NodeRenameException,
-    RebalanceException,
-    SetAlternateAddressException,
-    SetAuthenticationException,
-    SetClusterNameException,
-    SetGsiSettingsException,
-    SetMemoryQuotaException,
-    UserCreationException,
-)
+from .exceptions import *
 
 
 COUCHBASE_HOST = "127.0.0.1"
