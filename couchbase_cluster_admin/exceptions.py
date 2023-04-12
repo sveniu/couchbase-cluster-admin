@@ -50,7 +50,7 @@ class SetClusterNameException(Exception):
     pass
 
 
-class SetGsiSettingsExceptin(Exception):
+class SetGsiSettingsException(Exception):
     pass
 
 

@@ -17,7 +17,7 @@ from .exceptions import (
     SetAlternateAddressException,
     SetAuthenticationException,
     SetClusterNameException,
-    SetGsiSettingsExceptin,
+    SetGsiSettingsException,
     SetMemoryQuotaException,
     UserCreationException,
 )
@@ -467,7 +467,7 @@ class Cluster(BaseClient):
             data=gsi_settings,
         )
         if resp.status_code != 200:
-            raise SetGsiSettingsExceptin(resp.text)
+            raise SetGsiSettingsException(resp.text)
 
     def create_backup_plan(self, plan_name: str, plan_settings: dict):
         """
