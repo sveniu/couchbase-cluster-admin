@@ -206,6 +206,72 @@ def test_set_stats():
 
 
 @responses.activate
+def test_set_gsi_settings():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/settings/indexes",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher({"storageMode": "plasma"})
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["kv"], api_host=host, api_port=port
+    )
+    c.set_gsi_settings({"storageMode": "plasma"})
+
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_delete_node_alternate_address():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.DELETE,
+        f"http://{host}:{port}/node/controller/setupAlternateAddresses/external",
+        body="",
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["kv"], api_host=host, api_port=port
+    )
+    c.delete_node_alternate_address()
+
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_set_node_alternate_address():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.PUT,
+        f"http://{host}:{port}/node/controller/setupAlternateAddresses/external",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher({"hostname": "new-hostname"})
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["kv"], api_host=host, api_port=port
+    )
+    c.set_node_alternate_address("new-hostname")
+
+    assert len(responses.calls) == 1
+
+
+@responses.activate
 def test_set_disk_paths():
     host = "127.0.0.1"
     port = "8091"
