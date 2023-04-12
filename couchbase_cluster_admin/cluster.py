@@ -1,5 +1,4 @@
 import logging
-import json
 import time
 
 from .client import BaseClient
@@ -505,9 +504,7 @@ class Cluster(BaseClient):
         resp = self.http_request(
             url,
             method="POST",
-            # Backup plan settings is a multiple-level nested data structure.
-            # Requests will mangle it if we don't explicitly encode it to JSON.
-            data=json.dumps(plan_settings),
+            json=plan_settings,
         )
         if resp.status_code != 200:
             raise BackupPlanCreationException(resp.text)
@@ -526,8 +523,7 @@ class Cluster(BaseClient):
         resp = self.http_request(
             url,
             method="POST",
-            # Repository settings is a JSON payload, not form-encoded
-            data=json.dumps(repository_settings),
+            json=repository_settings,
         )
         if resp.status_code != 200:
             raise BackupRepositoryCreationException(resp.text)
