@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "couchbase-cluster-admin"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
-authors = ["Sven Ulland <sven.ulland@gmail.com>"]
+authors = ["Sven Ulland <sven.ulland@gmail.com>", "Cosimo Streppone <cosimo@streppone.it>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
