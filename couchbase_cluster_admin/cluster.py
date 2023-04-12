@@ -428,7 +428,7 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise DeleteAlternateAddressException(resp.text)
 
-    def set_node_alternate_address(self, hostname: dict):
+    def set_node_alternate_address(self, hostname: str):
         url = f"{self.baseurl}/node/controller/setupAlternateAddresses/external"
         resp = self.http_request(
             url,
