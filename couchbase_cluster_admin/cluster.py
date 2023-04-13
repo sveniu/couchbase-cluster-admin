@@ -1,7 +1,10 @@
+import json
 import logging
 import time
 
 from .client import BaseClient
+from .exceptions import *
+
 
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
@@ -17,18 +20,6 @@ service_name_memory_quota_table = {
     "kv": "memoryQuota",
     "n1ql": "indexMemoryQuota",
 }
-
-
-class IllegalArgumentError(ValueError):
-    pass
-
-
-class AddToNotProvisionedNodeException(Exception):
-    pass
-
-
-class ConnectToControllerOnJoinException(Exception):
-    pass
 
 
 class Cluster(BaseClient):
@@ -81,7 +72,7 @@ class Cluster(BaseClient):
 
         resp = self.http_request(url, method="POST", data=payload)
         if resp.status_code != 200:
-            raise Exception(f"Failed to set cluster name: {resp.text}")
+            raise SetClusterNameException(resp.text)
 
         self.cluster_name = cluster_name
 
@@ -108,7 +99,7 @@ class Cluster(BaseClient):
             data=quotas,
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to set memory quotas: {resp.text}")
+            raise SetMemoryQuotaException(resp.text)
 
     def set_memory_quotas_by_service_name(self, quotas_by_service_name: dict, *args):
         """
@@ -149,7 +140,7 @@ class Cluster(BaseClient):
             },
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to set authentication: {resp.text}")
+            raise SetAuthenticationException(resp.text)
 
     def set_stats(self, send_stats=False):
         """
@@ -185,7 +176,7 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to set disk paths: {resp.text}")
 
-    def rename_node(self, new_hostname: str):
+    def rename_node(self, new_hostname: str, update_self=False):
         """
         https://docs.couchbase.com/server/current/rest-api/rest-name-node.html
 
@@ -197,10 +188,13 @@ class Cluster(BaseClient):
 
         resp = self.http_request(url, method="POST", data=payload)
         if resp.status_code != 200:
-            raise Exception(f"Failed to rename node: {resp.text}")
+            raise NodeRenameException(resp.text)
 
-        # From now on, send all requests to the new hostname
-        self.api_host = new_hostname
+        # From now on, send all requests to the new hostname.
+        # Might not be desirable in all cases (f.ex. if we're renaming the
+        # node to an internal-only IP while accessing it from an external one)
+        if update_self:
+            self.api_host = new_hostname
 
     def join_cluster(
         self,
@@ -243,7 +237,7 @@ class Cluster(BaseClient):
                 raise ConnectToControllerOnJoinException(resp.text)
 
         if resp.status_code != 200:
-            raise Exception(f"Failed to join cluster: {resp.text}")
+            raise ClusterJoinException(resp.text)
 
     @property
     def node_info(self):
@@ -311,7 +305,7 @@ class Cluster(BaseClient):
             data=data,
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to join cluster: {resp.text}")
+            raise RebalanceException(resp.text)
 
     @property
     def rebalance_progress(self):
@@ -358,7 +352,7 @@ class Cluster(BaseClient):
             data=bucket_config,
         )
         if resp.status_code not in (200, 202):
-            raise Exception(f"Failed to create bucket: {resp.text}")
+            raise BucketCreationException(resp.text)
 
     @property
     def users(self):
@@ -384,7 +378,7 @@ class Cluster(BaseClient):
             data=data,
         )
         if resp.status_code != 200:
-            raise Exception(f"Failed to create user: {resp.text}")
+            raise UserCreationException(resp.text)
 
     def diag_eval(self, data: bytes):
         url = f"{self.baseurl}/diag/eval"
@@ -425,3 +419,114 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise Exception(f"Failed to set auto failover settings: {resp.text}")
+
+    def delete_node_alternate_address(self):
+        url = f"{self.baseurl}/node/controller/setupAlternateAddresses/external"
+        resp = self.http_request(
+            url,
+            method="DELETE",
+        )
+        if resp.status_code != 200:
+            raise DeleteAlternateAddressException(resp.text)
+
+    def set_node_alternate_address(self, hostname: str):
+        url = f"{self.baseurl}/node/controller/setupAlternateAddresses/external"
+        resp = self.http_request(
+            url,
+            method="PUT",
+            data={"hostname": hostname},
+        )
+        if resp.status_code != 200:
+            raise SetAlternateAddressException(resp.text)
+
+    def set_gsi_settings(self, gsi_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/post-settings-indexes.html
+        """
+        url = f"{self.baseurl}/settings/indexes"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=gsi_settings,
+        )
+        if resp.status_code != 200:
+            raise SetGsiSettingsException(resp.text)
+
+        return resp.json()
+
+    def create_backup_plan(self, plan_name: str, plan_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-rest-api.html
+
+        The plan settings dictionary can be a bit unwieldy. Here's an example
+        for a weekly backup plan with full backups on Sundays at 01:15 and
+        incremental on every other day at 01:15:
+
+          {
+             "description" : "Sample Weekly Backup Plan",
+             "name" : "sample_weekly",
+             "services" : [
+                "data",
+                "gsi"
+             ],
+             "tasks" : [
+                {
+                   "name" : "daily_task_mo",
+                   "options" : null,
+                   "schedule" : {
+                      "frequency" : 1,
+                      "job_type" : "BACKUP",
+                      "period" : "MONDAY",
+                      "time" : "01:15"
+                   },
+                   "task_type" : "BACKUP"
+                },
+                ...
+                {
+                   "full_backup" : true,
+                   "name" : "daily_task_su_f",
+                   "options" : null,
+                   "schedule" : {
+                      "frequency" : 1,
+                      "job_type" : "BACKUP",
+                      "period" : "SUNDAY",
+                      "time" : "01:15"
+                   },
+                   "task_type" : "BACKUP"
+                }
+             ]
+          }
+        """
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/plan/{plan_name}"
+
+        if not plan_settings:
+            raise ValueError("Backup plan settings must be specified.")
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=plan_settings,
+        )
+        if resp.status_code != 200:
+            raise BackupPlanCreationException(resp.text)
+
+    def create_backup_repository(self, repository_name: str, repository_settings: dict):
+        """
+        https://docs.couchbase.com/server/7.1/rest-api/backup-create-repository.html
+        """
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self/repository/active/{repository_name}"
+
+        if not repository_settings:
+            raise ValueError("Backup repository settings must be specified.")
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=repository_settings,
+        )
+        if resp.status_code != 200:
+            raise BackupRepositoryCreationException(resp.text)

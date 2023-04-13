@@ -153,6 +153,10 @@ def test_status_code(docker_inspect):
     c.set_cluster_name(new_cluster_name)
     assert c.pool_info["clusterName"] == new_cluster_name
 
+    # Set GSI settings: we should get back the correct index storage mode
+    gsi_settings = c.set_gsi_settings({"storageMode": "plasma"})
+    assert gsi_settings["storageMode"] == "plasma"
+
     # Create a bucket.
     assert len(c.buckets) == 0
     c.create_bucket(
