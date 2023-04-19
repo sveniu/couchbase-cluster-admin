@@ -385,3 +385,38 @@ def test_rebalance():
     c.rebalance(known_nodes, ejected_nodes)
 
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_set_audit_settings():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/settings/audit",
+        body="",
+        match=[matchers.urlencoded_params_matcher(
+            {
+                "auditdEnabled": "true",
+                "disabled": "8255",
+                "rotateInterval": "86400",
+                "logPath": "/var/log/auditd.log",
+                "rotateSize": "20971520",
+            }
+        )],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1"], api_host=host, api_port=port
+    )
+    c.set_audit_settings({
+        "auditdEnabled": "true",
+        "disabled": 8255,
+        "rotateInterval": 86400,
+        "logPath": "/var/log/auditd.log",
+        "rotateSize": 20971520,
+    })
+
+    assert len(responses.calls) == 1

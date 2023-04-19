@@ -42,6 +42,10 @@ class SetAlternateAddressException(Exception):
     pass
 
 
+class SetAuditSettingsException(Exception):
+    pass
+
+
 class SetAuthenticationException(Exception):
     pass
 
