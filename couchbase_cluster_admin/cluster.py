@@ -429,6 +429,19 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise DeleteAlternateAddressException(resp.text)
 
+    def set_audit_settings(self, audit_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-auditing.html
+        """
+        url = f"{self.baseurl}/settings/audit"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=audit_settings,
+        )
+        if resp.status_code != 200:
+            raise SetAuditSettingsException(resp.text)
+
     def set_node_alternate_address(self, hostname: str):
         url = f"{self.baseurl}/node/controller/setupAlternateAddresses/external"
         resp = self.http_request(
