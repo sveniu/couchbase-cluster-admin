@@ -1,9 +1,9 @@
-import json
 import logging
 import time
 
 from .client import BaseClient
 from .exceptions import *
+from .ssh_tunnel import SshTunnel
 
 
 COUCHBASE_HOST = "127.0.0.1"
@@ -32,6 +32,8 @@ class Cluster(BaseClient):
         api_port=COUCHBASE_PORT_REST,
         username=None,
         password=None,
+        connect_through_ssh=False,
+        ssh_username=None,
     ):
         self.cluster_name = cluster_name
         self.services = services
@@ -40,6 +42,27 @@ class Cluster(BaseClient):
         self.api_port = api_port
         self.username = username
         self.password = password
+
+        if connect_through_ssh:
+            if not ssh_username:
+                raise ValueError("You need to specify a `ssh_username`")
+
+            self.ssh_tunnel = SshTunnel(
+                ssh_username=ssh_username,
+                remote_host=api_host,
+                remote_port=api_port,
+            )
+            self.ssh_tunnel.start()
+            self.api_host = self.ssh_tunnel.local_host
+            self.api_port = self.ssh_tunnel.local_port
+            logging.info(f"Started ssh tunnel to {api_host}:{api_port} on {self.api_host}:{self.api_port}")
+        else:
+            self.ssh_tunnel = None
+
+    def __del__(self):
+        if self.ssh_tunnel is not None:
+            logging.info(f"Stopping ssh tunnel {self.api_host}:{self.api_port}")
+            self.ssh_tunnel.stop()
 
     @property
     def baseurl(self):
