@@ -31,6 +31,6 @@ class BaseClient:
             except requests.exceptions.ReadTimeout as e:
                 logging.warning(
                     f"ReadTimeout exception for request {method} {url}. "
-                    + f"{max_retries} retries left: {e.printStackTrace()}"
+                    + f"{max_retries} retries left: {e}"
                 )
                 time.sleep(1)
