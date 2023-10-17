@@ -26,7 +26,7 @@ class Cluster(BaseClient):
     def __init__(
         self,
         cluster_name: str,
-        services: list = ["kv"],
+        services: list,
         api_protocol="http",
         api_host=COUCHBASE_HOST,
         api_port=COUCHBASE_PORT_REST,
@@ -36,7 +36,7 @@ class Cluster(BaseClient):
         ssh_username=None,
     ):
         self.cluster_name = cluster_name
-        self.services = services
+        self.services = services or ["kv"]
         self.api_protocol = api_protocol
         self.api_host = api_host
         self.api_port = api_port
