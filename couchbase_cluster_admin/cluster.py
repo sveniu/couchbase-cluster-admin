@@ -199,7 +199,7 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to set disk paths: {resp.text}")
 
-    def set_memcached_global(self, memcached_settings: dict):
+    def set_memcached_global_options(self, memcached_settings: dict):
         """
         https://docs.couchbase.com/server/current/rest-api/rest-manage-cluster-connections.html
         """

@@ -53,7 +53,7 @@ def test_set_memcached_global_options():
     c = cluster.Cluster(
         "mycluster", services=["service1"], api_host=host, api_port=port
     )
-    c.set_memcached_global(
+    c.set_memcached_global_options(
         {
             "system_connections": 50000,
             "num_writer_threads": 8,
