@@ -199,6 +199,19 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to set disk paths: {resp.text}")
 
+    def set_memcached_global(self, memcached_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-manage-cluster-connections.html
+        """
+        url = f"{self.baseurl}/pools/default/settings/memcached/global"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=memcached_settings
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set memcached global options: {resp.text}")
+
     def rename_node(self, new_hostname: str, update_self=False):
         """
         https://docs.couchbase.com/server/current/rest-api/rest-name-node.html

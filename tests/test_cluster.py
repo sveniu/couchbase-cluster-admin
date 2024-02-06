@@ -31,6 +31,40 @@ def test_enable_services():
 
 
 @responses.activate
+def test_set_memcached_global_options():
+    host = "127.0.0.1"
+    port = "8091"
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/pools/default/settings/memcached/global",
+        body="",
+        match=[
+            matchers.urlencoded_params_matcher(
+                {
+                    "system_connections": "50000",
+                    "num_writer_threads": "8",
+                }
+            )
+        ],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1"], api_host=host, api_port=port
+    )
+    c.set_memcached_global(
+        {
+            "system_connections": 50000,
+            "num_writer_threads": 8,
+        }
+    )
+
+    assert len(responses.calls) == 1
+
+
+
+@responses.activate
 def test_set_memory_quotas():
     host = "127.0.0.1"
     port = "8091"
