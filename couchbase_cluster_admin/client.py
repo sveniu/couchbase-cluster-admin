@@ -5,6 +5,9 @@ import requests
 
 
 class BaseClient:
+    def __init__(self, tls_verify=True):
+        self.tls_verify = tls_verify
+
     def http_request(self, url, method="GET", data=None, json=None, headers={}, timeout=10.0):
         auth = None
         if self.username is not None and self.password is not None:
@@ -25,6 +28,7 @@ class BaseClient:
                     headers=headers,
                     auth=auth,
                     timeout=timeout,
+                    verify=self.tls_verify,
                 )
 
                 return response

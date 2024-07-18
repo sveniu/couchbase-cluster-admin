@@ -5,7 +5,6 @@ from .client import BaseClient
 from .exceptions import *
 from .ssh_tunnel import SshTunnel
 
-
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
 COUCHBASE_SECURE_PORT_REST = "18091"
@@ -28,6 +27,7 @@ class Cluster(BaseClient):
         cluster_name: str,
         services: list,
         api_protocol="http",
+        api_tls_verify=True,
         api_host=COUCHBASE_HOST,
         api_port=COUCHBASE_PORT_REST,
         username=None,
@@ -42,6 +42,9 @@ class Cluster(BaseClient):
         self.api_port = api_port
         self.username = username
         self.password = password
+
+        # This property is used in BaseClient.
+        self.tls_verify = api_tls_verify
 
         if connect_through_ssh:
             if not ssh_username:
@@ -389,6 +392,34 @@ class Cluster(BaseClient):
         )
         if resp.status_code not in (200, 202):
             raise BucketCreationException(resp.text)
+
+    def get_scopes(self, bucket_name: str):
+        url = f"{self.baseurl}/pools/default/buckets/{bucket_name}/scopes"
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get scopes: {resp.text}")
+
+        return resp.json()
+
+    def create_scope(self, bucket_name: str, scope_config: dict):
+        url = f"{self.baseurl}/pools/default/buckets/{bucket_name}/scopes"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=scope_config,
+        )
+        if resp.status_code not in (200, 202):
+            raise ScopeCreationException(resp.text)
+
+    def create_collection(self, bucket_name: str, scope_name: str, collection_config: dict):
+        url = f"{self.baseurl}/pools/default/buckets/{bucket_name}/scopes/{scope_name}/collections"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=collection_config,
+        )
+        if resp.status_code not in (200, 202):
+            raise CollectionCreationException(resp.text)
 
     @property
     def users(self):
