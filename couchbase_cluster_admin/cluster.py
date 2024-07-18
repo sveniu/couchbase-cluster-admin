@@ -393,6 +393,34 @@ class Cluster(BaseClient):
         if resp.status_code not in (200, 202):
             raise BucketCreationException(resp.text)
 
+    def get_scopes(self, bucket_name: str):
+        url = f"{self.baseurl}/pools/default/buckets/{bucket_name}/scopes"
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get scopes: {resp.text}")
+
+        return resp.json()
+
+    def create_scope(self, bucket_name: str, scope_config: dict):
+        url = f"{self.baseurl}/pools/default/buckets/{bucket_name}/scopes"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=scope_config,
+        )
+        if resp.status_code not in (200, 202):
+            raise ScopeCreationException(resp.text)
+
+    def create_collection(self, bucket_name: str, scope_name: str, collection_config: dict):
+        url = f"{self.baseurl}/pools/default/buckets/{bucket_name}/scopes/{scope_name}/collections"
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=collection_config,
+        )
+        if resp.status_code not in (200, 202):
+            raise CollectionCreationException(resp.text)
+
     @property
     def users(self):
         url = f"{self.baseurl}/settings/rbac/users"

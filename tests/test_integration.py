@@ -170,13 +170,28 @@ def test_status_code(docker_inspect):
 
     # Create a bucket.
     assert len(c.buckets) == 0
+    bucket_name= "mybucket"
     c.create_bucket(
         {
-            "name": "mybucket",
+            "name": bucket_name,
             "ramQuotaMB": "100",
         }
     )
     assert len(c.buckets) == 1
+
+    # Create a scope.
+    scope_name = "myscope"
+    c.create_scope(bucket_name, {"name": scope_name})
+    got_scopes = c.get_scopes(bucket_name)
+    assert scope_name in [s["name"] for s in got_scopes["scopes"]]
+
+    # Create two collections.
+    c.create_collection(bucket_name, scope_name, {"name": "mycollection1"})
+    c.create_collection(bucket_name, scope_name, {"name": "mycollection2"})
+    got_scopes = c.get_scopes(bucket_name)
+    assert len(got_scopes["scopes"][0]["collections"]) == 2
+    assert "mycollection1" in [c["name"] for c in got_scopes["scopes"][0]["collections"]]
+    assert "mycollection2" in [c["name"] for c in got_scopes["scopes"][0]["collections"]]
 
     # Set bucket property.
     # FIXME only works on localhost. Returned error:

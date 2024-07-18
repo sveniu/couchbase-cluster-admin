@@ -14,6 +14,14 @@ class BucketCreationException(Exception):
     pass
 
 
+class ScopeCreationException(Exception):
+    pass
+
+
+class CollectionCreationException(Exception):
+    pass
+
+
 class ClusterJoinException(Exception):
     pass
 
