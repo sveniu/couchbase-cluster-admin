@@ -5,7 +5,6 @@ from .client import BaseClient
 from .exceptions import *
 from .ssh_tunnel import SshTunnel
 
-
 COUCHBASE_HOST = "127.0.0.1"
 COUCHBASE_PORT_REST = "8091"
 COUCHBASE_SECURE_PORT_REST = "18091"
@@ -28,6 +27,7 @@ class Cluster(BaseClient):
         cluster_name: str,
         services: list,
         api_protocol="http",
+        api_tls_verify=True,
         api_host=COUCHBASE_HOST,
         api_port=COUCHBASE_PORT_REST,
         username=None,
@@ -42,6 +42,9 @@ class Cluster(BaseClient):
         self.api_port = api_port
         self.username = username
         self.password = password
+
+        # This property is used in BaseClient.
+        self.tls_verify = api_tls_verify
 
         if connect_through_ssh:
             if not ssh_username:

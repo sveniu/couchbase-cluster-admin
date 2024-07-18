@@ -1,13 +1,13 @@
 version: "2"
 services:
   couchbase1:
-    image: "couchbase:enterprise-6.6.5"
+    image: "couchbase:enterprise-7.6.1"
     container_name: "couchbase_node_a"
     ports:
-      - "18091:8091"
+      - "18091:18091"
 
   couchbase2:
-    image: "couchbase:enterprise-6.6.5"
+    image: "couchbase:enterprise-7.6.1"
     container_name: "couchbase_node_b"
     ports:
-      - "28091:8091"
+      - "28091:18091"

@@ -10,6 +10,7 @@ from couchbase_cluster_admin import cluster
 
 # https://docs.couchbase.com/server/current/install/install-ports.html#detailed-port-description
 COUCHBASE_PORT_REST = 8091
+COUCHBASE_PORT_REST_TLS = 18091
 
 
 @pytest.fixture(scope="session")
@@ -54,11 +55,17 @@ def docker_inspect(docker_compose_file_path):
     )
 
 
+# Ignore this warning:
+# ../lib/python3.10/site-packages/urllib3/connectionpool.py:1043:
+#   InsecureRequestWarning: Unverified HTTPS request is being made to host
+#   '127.0.0.1'. Adding certificate verification is strongly advised. See:
+#   https://urllib3.readthedocs.io/en/1.26.x/advanced-usage.html#ssl-warnings
+@pytest.mark.filterwarnings("ignore::urllib3.exceptions.InsecureRequestWarning")
 def test_status_code(docker_inspect):
     node_a = {
         "host": "127.0.0.1",
         "port": jmespath.search(
-            '[0].HostConfig.PortBindings."8091/tcp"[0].HostPort', docker_inspect
+            '[0].HostConfig.PortBindings."18091/tcp"[0].HostPort', docker_inspect
         ),
         "internal_ip": jmespath.search(
             "[0].NetworkSettings.Networks.*.IPAddress", docker_inspect
@@ -67,7 +74,7 @@ def test_status_code(docker_inspect):
     node_b = {
         "host": "127.0.0.1",
         "port": jmespath.search(
-            '[1].HostConfig.PortBindings."8091/tcp"[0].HostPort', docker_inspect
+            '[1].HostConfig.PortBindings."18091/tcp"[0].HostPort', docker_inspect
         ),
         "internal_ip": jmespath.search(
             "[1].NetworkSettings.Networks.*.IPAddress", docker_inspect
@@ -77,9 +84,9 @@ def test_status_code(docker_inspect):
     # Wait for nodes to start.
     for node in (node_a, node_b):
         while True:
-            url = f"""http://{node["host"]}:{node["port"]}/ui/index.html"""
+            url = f"""https://{node["host"]}:{node["port"]}/ui/index.html"""
             try:
-                response = requests.get(url)
+                response = requests.get(url, verify=False)
                 if response.status_code == 200:
                     break
             except requests.exceptions.ConnectionError:
@@ -91,6 +98,8 @@ def test_status_code(docker_inspect):
     c = cluster.Cluster(
         "mycluster",
         services=["kv"],
+        api_protocol="https",
+        api_tls_verify=False,
         api_host=node_a["host"],
         api_port=node_a["port"],
         username="foo",
@@ -120,13 +129,15 @@ def test_status_code(docker_inspect):
     member = cluster.Cluster(
         "mycluster",
         services=["kv"],
+        api_protocol="https",
+        api_tls_verify=False,
         api_host=node_b["host"],
         api_port=node_b["port"],
         username="foo",
         password="foobar",  # "The password must be at least 6 characters long."
     )
     member.enable_services()
-    member.join_cluster(node_a["internal_ip"], COUCHBASE_PORT_REST, insecure=True)
+    member.join_cluster(node_a["internal_ip"], COUCHBASE_PORT_REST_TLS)
 
     # Assert that we have two nodes, i.e. the join was successful.
     assert len(c.known_nodes) == 2
