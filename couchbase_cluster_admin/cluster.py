@@ -85,6 +85,25 @@ class Cluster(BaseClient):
         if resp.status_code != 200:
             raise Exception(f"Failed to enable services: {resp.text}")
 
+    def get_cluster_nodes(self):
+        """
+        Gets a list of cluster nodes with their details.
+
+        This is used by the `start_logs_collection()` method to provide a list
+        of node names, since the `nodes='*'` wildcard is not working as
+        documented.
+        """
+        url = f"{self.baseurl}/pools/default"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise GetClusterNodesException(resp.text)
+
+        cluster_info = resp.json()
+        nodes = cluster_info.get("nodes", [])
+
+        return nodes
+
     def set_cluster_name(self, cluster_name: str):
         """
         https://docs.couchbase.com/server/current/rest-api/rest-name-cluster.html
@@ -566,3 +585,17 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise BackupRepositoryCreationException(resp.text)
+
+    def start_logs_collection(self, collection_settings: dict):
+        """
+        https://docs.couchbase.com/server/7.2/rest-api/rest-manage-log-collection.html
+        """
+        url = f"{self.baseurl}/controller/startLogsCollection"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=collection_settings,
+        )
+        if resp.status_code != 200:
+            raise LogsCollectionException(resp.text)

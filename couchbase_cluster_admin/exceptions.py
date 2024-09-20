@@ -26,7 +26,15 @@ class DeleteAlternateAddressException(Exception):
     pass
 
 
+class GetClusterNodesException(Exception):
+    pass
+
+
 class IllegalArgumentError(ValueError):
+    pass
+
+
+class LogsCollectionException(Exception):
     pass
 
 
