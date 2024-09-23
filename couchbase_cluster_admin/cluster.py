@@ -610,3 +610,17 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise BackupRepositoryCreationException(resp.text)
+
+    def start_logs_collection(self, collection_settings: dict):
+        """
+        https://docs.couchbase.com/server/7.2/rest-api/rest-manage-log-collection.html
+        """
+        url = f"{self.baseurl}/controller/startLogsCollection"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=collection_settings,
+        )
+        if resp.status_code != 200:
+            raise LogsCollectionException(resp.text)

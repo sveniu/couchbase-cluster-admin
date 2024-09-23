@@ -38,6 +38,10 @@ class IllegalArgumentError(ValueError):
     pass
 
 
+class LogsCollectionException(Exception):
+    pass
+
+
 class NodeRenameException(Exception):
     pass
 

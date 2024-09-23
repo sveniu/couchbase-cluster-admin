@@ -454,3 +454,32 @@ def test_set_audit_settings():
     })
 
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_start_logs_collection():
+    host = "127.0.0.1"
+    port = "8091"
+
+    log_collection_options = {
+        "nodes": "ns_1@node1,ns_1@node2",
+        "logRedactionLevel": "none",
+        "uploadHost": "ftp.example.com",
+        "customer": "Example Ltd",
+        "ticket": "12345"
+    }
+
+    responses.add(
+        responses.POST,
+        f"http://{host}:{port}/controller/startLogsCollection",
+        body="",
+        match=[matchers.urlencoded_params_matcher(log_collection_options)],
+        status=200,
+    )
+
+    c = cluster.Cluster(
+        "mycluster", services=["service1"], api_host=host, api_port=port
+    )
+    c.start_logs_collection(log_collection_options)
+
+    assert len(responses.calls) == 1
