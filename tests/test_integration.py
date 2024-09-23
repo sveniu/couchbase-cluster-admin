@@ -30,7 +30,8 @@ def docker_compose_file_path(pytestconfig):
 def docker_inspect(docker_compose_file_path):
     subprocess.check_call(
         [
-            "docker-compose",
+            "docker",
+            "compose",
             "-f",
             docker_compose_file_path,
             "up",
@@ -46,7 +47,8 @@ def docker_inspect(docker_compose_file_path):
 
     subprocess.check_call(
         [
-            "docker-compose",
+            "docker",
+            "compose",
             "-f",
             docker_compose_file_path,
             "down",
