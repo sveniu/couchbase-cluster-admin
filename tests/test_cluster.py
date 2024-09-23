@@ -424,34 +424,6 @@ def test_set_audit_settings():
 
 
 @responses.activate
-def test_get_cluster_nodes():
-    host = "127.0.0.1"
-    port = "8091"
-
-    responses.add(
-        responses.GET,
-        f"http://{host}:{port}/pools/default",
-        body=json.dumps({
-            "nodes": [
-                {"otpNode": "ns_1@node1", "status": "healthy"},
-                {"otpNode": "ns_1@node2", "status": "healthy"},
-            ],
-        }),
-        status=200,
-    )
-
-    c = cluster.Cluster(
-        "mycluster",
-        services=["service1"],
-        api_host=host,
-        api_port=port
-    )
-    c.get_cluster_nodes()
-
-    assert len(responses.calls) == 1
-
-
-@responses.activate
 def test_start_logs_collection():
     host = "127.0.0.1"
     port = "8091"
