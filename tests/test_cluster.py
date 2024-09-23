@@ -1,4 +1,3 @@
-import json
 import pytest
 import responses
 from responses import matchers
