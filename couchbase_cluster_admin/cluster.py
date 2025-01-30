@@ -725,3 +725,138 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise LogsCollectionException(resp.text)
+
+    def get_root_certificates(self):
+        """
+        https://docs.couchbase.com/server/current/rest-api/get-trusted-cas.html
+        """
+
+        url = f"{self.baseurl}/pools/default/trustedCAs"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get root certificates: {resp.text}")
+
+        return resp.json()
+
+    def get_xdcr_references(self):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-xdcr-get-ref.html
+        """
+
+        url = f"{self.baseurl}/pools/default/remoteClusters"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get XDCR references: {resp.text}")
+
+        return resp.json()
+
+    def create_xdcr_reference(self, xdcr_reference_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-xdcr-create-ref.html
+        """
+
+        url = f"{self.baseurl}/pools/default/remoteClusters"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=xdcr_reference_settings,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to create XDCR reference: {resp.text}")
+
+        return resp.json()
+
+    def create_xdcr_replication(self, xdcr_replication_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-xdcr-create-replication.html
+        """
+
+        url = f"{self.baseurl}/controller/createReplication"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            data=xdcr_replication_settings,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to create XDCR replication: {resp.text}")
+
+        return resp.json()
+
+    def get_multiple_statistics(self, statistics_specifications: list):
+        """
+        https://docs.couchbase.com/server/current/rest-api/rest-statistics-multiple.html
+        """
+
+        url = f"{self.baseurl}/pools/default/stats/range/"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=statistics_specifications,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get statistics: {resp.text}")
+
+        return resp.json()
+
+    def get_xdcr_changes_left_total_by_bucket(self, bucket_name: str):
+        """
+        Convenience function for checking XDCR progress for a bucket.
+
+        May throw IndexError if the metric is not yet available.
+        """
+
+        # This was copied from the Couchbase web UI behaviour by observing
+        # network calls while an XDCR replication is in progress.
+        statistics_specification = [
+            {
+                "nodesAggregation": "sum",
+                "applyFunctions": ["sum"],
+                "start": -5,
+                "step": 10,
+                "metric": [
+                    {"label": "name", "value": "xdcr_changes_left_total"},
+                    {"label": "sourceBucketName", "value": bucket_name},
+                ],
+            }
+        ]
+
+        # Response structure. Note that the `values` array has timestamp,value
+        # pairs; also note that the numerical value is a string, and is
+        # therefore converted to integer when returned.
+        #
+        # [
+        #   {
+        #     "data": [
+        #       {
+        #         "metric": {
+        #           "nodes": [
+        #             "ec2-176-34-80-198.eu-west-1.compute.amazonaws.com:8091",
+        #             "ec2-34-245-68-225.eu-west-1.compute.amazonaws.com:8091",
+        #             "ec2-34-245-70-254.eu-west-1.compute.amazonaws.com:8091",
+        #             "ec2-54-216-220-234.eu-west-1.compute.amazonaws.com:8091"
+        #           ]
+        #         },
+        #         "values": [
+        #           [
+        #             1738247906,
+        #             "0"
+        #           ]
+        #         ]
+        #       }
+        #     ],
+        #     "errors": [],
+        #     "startTimestamp": 1738247906,
+        #     "endTimestamp": 1738247911
+        #   }
+        # ]
+
+        resp = self.get_multiple_statistics(statistics_specification)
+
+        # This can throw IndexError if the metric is not yet available, as the
+        # `data` array is empty.
+        return int(resp[0]["data"][0]["values"][0][1])
