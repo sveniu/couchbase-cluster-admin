@@ -130,7 +130,7 @@ def test_status_code(docker_inspect):
     # Join cluster.
     member = cluster.Cluster(
         "mycluster",
-        services=["kv"],
+        services=["kv", "backup"],
         api_protocol="https",
         api_tls_verify=False,
         api_host=node_b["host"],
@@ -211,3 +211,7 @@ def test_status_code(docker_inspect):
         },
     )
     assert len(c.users) == 1
+
+    # Get cluster backup info.
+    backup_info = member.get_backup_info()
+    assert {"name", "active", "imported", "archived"} == backup_info.keys()
