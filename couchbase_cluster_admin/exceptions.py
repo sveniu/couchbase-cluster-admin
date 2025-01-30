@@ -76,3 +76,11 @@ class SetMemoryQuotaException(Exception):
 
 class UserCreationException(Exception):
     pass
+
+
+class ImportBackupException(Exception):
+    pass
+
+
+class RestoreBackupException(Exception):
+    pass

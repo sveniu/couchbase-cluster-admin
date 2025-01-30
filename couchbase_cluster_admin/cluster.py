@@ -534,6 +534,85 @@ class Cluster(BaseClient):
 
         return resp.json()
 
+    def get_backup_info(self):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-get-cluster-info.html
+        """
+
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get backup info: {resp.text}")
+
+        return resp.json()
+
+    def import_backup(self, import_backup_settings: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-import-repository.html
+        """
+
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self/repository/import"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=import_backup_settings,
+        )
+        if resp.status_code != 200:
+            raise ImportBackupException(resp.text)
+
+    def get_backup_repository(
+        self,
+        repository_status: str,
+        repository_name: str = None,
+        detailed_info: bool = False,
+    ):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-get-repository-info.html
+        """
+
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self/repository/{repository_status}"
+
+        if repository_name is not None:
+            url += f"/{repository_name}"
+            if detailed_info:
+                url += "/info"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get backup repository: {resp.text}")
+
+        return resp.json()
+
+    def get_backup_task_history(
+        self,
+        repository_status: str,
+        repository_name: str,
+    ):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-get-task-info.html
+
+        TODO pagination: limit=N, offset=M
+        TODO filters: taskName=s
+        """
+
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self/repository/{repository_status}/{repository_name}/taskHistory"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get backup task history: {resp.text}")
+
+        return resp.json()
+
     def create_backup_plan(self, plan_name: str, plan_settings: dict):
         """
         https://docs.couchbase.com/server/current/rest-api/backup-rest-api.html
@@ -610,6 +689,28 @@ class Cluster(BaseClient):
         )
         if resp.status_code != 200:
             raise BackupRepositoryCreationException(resp.text)
+
+    def restore_backup(
+        self,
+        repository_status: str,
+        repository_name: str,
+        restore_specification: dict,
+    ):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-restore-data.html
+        """
+
+        # The `_p/backup` prefix causes the request to be routed to the backup
+        # service nodes automatically, without using the backup service port.
+        url = f"{self.baseurl}/_p/backup/api/v1/cluster/self/repository/{repository_status}/{repository_name}/restore"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=restore_specification,
+        )
+        if resp.status_code != 200:
+            raise RestoreBackupException(resp.text)
 
     def start_logs_collection(self, collection_settings: dict):
         """
