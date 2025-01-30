@@ -860,3 +860,78 @@ class Cluster(BaseClient):
         # This can throw IndexError if the metric is not yet available, as the
         # `data` array is empty.
         return int(resp[0]["data"][0]["values"][0][1])
+
+    def get_index_status(self):
+        """
+        Undocumented endpoint?
+
+        Response structure showing a single index:
+        {
+            "indexes": [
+                {
+                    "storageMode": "plasma",
+                    "partitionMap": {
+                        "ec2-52-208-24-56.eu-west-1.compute.amazonaws.com:8091": [
+                            0
+                        ]
+                    },
+                    "numPartition": 1,
+                    "partitioned": false,
+                    "instId": 15226363487005596366,
+                    "hosts": [
+                        "ec2-52-208-24-56.eu-west-1.compute.amazonaws.com:8091"
+                    ],
+                    "stale": false,
+                    "progress": 100,
+                    "definition": "CREATE PRIMARY INDEX `#primary` ON `my_bucket`.`_system`.`_query`",
+                    "status": "Ready",
+                    "collection": "_query",
+                    "scope": "_system",
+                    "bucket": "my_bucket",
+                    "replicaId": 0,
+                    "numReplica": 0,
+                    "lastScanTime": "NA",
+                    "indexName": "#primary",
+                    "index": "#primary",
+                    "id": 13229415393569095926
+                }
+            ],
+            "version": 46337109,
+            "warnings": []
+        }
+
+        Interesting attributes:
+
+        * "progress": the index rebuild progress in percent. It's 0 when
+          status is "Created", and 100 when status is "Ready".
+
+        * "status" can have the values:
+            - "Created": Index has been created, but has not been built.
+            - "Building": Index is being built.
+            - "Ready": Index has been built.
+
+        """
+        url = f"{self.baseurl}/indexStatus"
+
+        resp = self.http_request(url)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get index status: {resp.text}")
+
+        return resp.json()
+
+    def query_execute(self, query_parameters: dict):
+        """
+        https://docs.couchbase.com/server/current/n1ql-rest-query/index.html
+        """
+
+        url = f"{self.baseurl}/_p/query/query/service"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=query_parameters,
+        )
+        if resp.status_code != 200:
+            raise Exception(f"Failed to execute query: {resp.text}")
+
+        return resp.json()
