@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "couchbase-cluster-admin"
-version = "0.2.1"
+version = "0.3.0"
 description = ""
 authors = ["Sven Ulland <sven.ulland@gmail.com>", "Cosimo Streppone <cosimo@streppone.it>"]
 
