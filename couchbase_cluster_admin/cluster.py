@@ -212,7 +212,7 @@ class Cluster(BaseClient):
             method="POST",
             data=memcached_settings
         )
-        if resp.status_code != 200:
+        if not resp.status_code in (200, 202):
             raise Exception(f"Failed to set memcached global options: {resp.text}")
 
     def rename_node(self, new_hostname: str, update_self=False):
