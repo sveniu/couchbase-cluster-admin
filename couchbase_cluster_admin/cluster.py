@@ -935,3 +935,19 @@ class Cluster(BaseClient):
             raise Exception(f"Failed to execute query: {resp.text}")
 
         return resp.json()
+
+    def set_backup_service_threads(self, nodes_threads_map: dict):
+        """
+        https://docs.couchbase.com/server/current/rest-api/backup-node-threads.html
+        """
+
+        url = f"{self.baseurl}/_p/backup/api/v1/nodesThreadsMap"
+
+        resp = self.http_request(
+            url,
+            method="POST",
+            json=nodes_threads_map,
+        )
+
+        if resp.status_code != 200:
+            raise Exception(f"Failed to set backup service threads: {resp.text}")
